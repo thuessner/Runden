@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Runden mit Mini und Max</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --mini:#4fae3a; --mini-l:#e5f7dc; --max:#b9773d; --max-l:#f8ebdc;
+  --ink:#24324a; --soft:#5d6b82; --card:#fff; --hr:#ffe066; --hd:#e03131;
+  --ok:#2f9e44; --ok-l:#d3f9d8; --bad:#e03131; --bad-l:#ffe3e3; --mid:#fff3bf; --violet:#7048e8;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:'Fredoka','Nunito','Avenir Next',system-ui,sans-serif;color:var(--ink);
+  background:linear-gradient(160deg,#e7f5ff 0%,#f4fce3 55%,#fff4e6 100%);min-height:100vh;
+  touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#app{max-width:1640px;margin:0 auto;padding:14px 18px 30px;zoom:var(--z,1)}
+body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+input{-webkit-user-select:text;user-select:text}
+.tools{display:flex;gap:8px}
+.tool{background:#fff;border-radius:14px;min-width:52px;height:46px;padding:0 12px;font-size:19px;font-weight:600;box-shadow:0 3px 0 rgba(0,0,0,.08)}
+.playgrid,.learngrid{display:grid;grid-template-columns:1fr;gap:16px;align-items:start}
+.playgrid .card,.learngrid .card{margin-bottom:0}
+@media (min-width:1000px) and (orientation:landscape){
+  .playgrid{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
+  .learngrid{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}
+  .acard{position:sticky;top:12px}
+}
+.imgtool{display:inline-flex;align-items:center;cursor:pointer}
+.heroimg{flex-direction:column;gap:8px}
+.heroimg img{max-width:100%;max-height:240px;border-radius:20px;box-shadow:0 6px 20px rgba(36,50,74,.15);display:block}
+.acard.done .pad{display:none}
+.acard.done .check{display:none}
+button{font-family:inherit;color:inherit;cursor:pointer;border:none;-webkit-user-select:none;user-select:none}
+h1{font-size:clamp(26px,4.5vw,40px);margin:0 0 4px;line-height:1.1}
+h2{font-size:22px;margin:0 0 12px}
+.card{background:var(--card);border-radius:24px;padding:18px 20px;box-shadow:0 6px 0 rgba(36,50,74,.08),0 10px 30px rgba(36,50,74,.08);margin-bottom:16px}
+.hero{display:flex;align-items:center;gap:14px;justify-content:center;text-align:center;padding:8px 0 16px}
+.hero p{margin:0;color:var(--soft);font-size:18px}
+.char{width:96px;height:96px;flex:none}
+.char.sm{width:64px;height:64px}
+.bounce{animation:bounce .6s ease}
+@keyframes bounce{0%,100%{transform:translateY(0)}30%{transform:translateY(-18px)}60%{transform:translateY(0)}80%{transform:translateY(-6px)}}
+.shake{animation:shake .4s ease}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+
+.chips{display:flex;flex-wrap:wrap;gap:10px}
+.chip{background:#f1f3f5;border-radius:16px;padding:10px 16px;font-size:19px;font-weight:600;display:flex;flex-direction:column;align-items:center;min-width:120px;border:3px solid transparent}
+.chip small{font-weight:400;color:var(--soft);font-size:15px}
+.chip.on{background:var(--hr);border-color:#f59f00}
+.modes{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.mode{background:#f8f9fa;border-radius:20px;padding:16px;text-align:left;display:flex;flex-direction:column;gap:4px;border:3px solid #e9ecef;font-size:19px;transition:transform .1s}
+.mode:active{transform:scale(.97)}
+.mode .ico{font-size:34px}
+.mode small{color:var(--soft);font-size:15px;line-height:1.3}
+.mode.learn{background:var(--mini-l);border-color:#b2f2bb}
+.mode.knobel{background:#f3f0ff;border-color:#d0bfff}
+.merk{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.merk .rule{flex:1;min-width:240px;border-radius:18px;padding:12px 16px;font-size:18px;display:flex;gap:10px;align-items:center}
+.rule.down{background:var(--max-l)} .rule.up{background:var(--mini-l)}
+.rule b{font-size:22px}
+
+/* Top bar */
+.top{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.back{background:#fff;border-radius:14px;padding:8px 14px;font-size:17px;box-shadow:0 3px 0 rgba(0,0,0,.08)}
+.top .title{font-weight:600;font-size:20px;flex:1}
+.dots{display:flex;gap:6px}
+.dot{width:18px;height:18px;border-radius:50%;background:#dee2e6}
+.dot.cur{background:#74c0fc;box-shadow:0 0 0 3px #d0ebff}
+.dot.g{background:var(--ok)} .dot.y{background:#fab005} .dot.r{background:var(--bad)}
+
+.speaker{display:flex;align-items:flex-end;gap:10px;margin-bottom:10px}
+.bubble{background:#fff;border-radius:20px;padding:10px 16px;font-size:18px;position:relative;box-shadow:0 3px 0 rgba(0,0,0,.06);max-width:600px}
+.bubble:before{content:"";position:absolute;left:-10px;bottom:16px;border:10px solid transparent;border-right-color:#fff;border-left:0}
+.q{font-size:clamp(21px,3vw,26px);line-height:1.45;margin-bottom:10px}
+.big{font-size:clamp(34px,6vw,52px);font-weight:700;letter-spacing:1px;text-align:center;margin:8px 0}
+.hr{background:var(--hr);border-radius:8px;padding:0 3px;box-shadow:0 0 0 2px #f59f00 inset}
+.hd{color:var(--hd);border-radius:50%;box-shadow:0 0 0 3px #ff8787;padding:0 4px;margin:0 1px}
+.blank{display:inline-block;min-width:.9em;text-align:center;background:#f3f0ff;border:3px dashed var(--violet);border-radius:10px;color:var(--violet);margin:0 2px}
+
+.tafel{border-collapse:collapse;margin:8px auto;font-size:26px;font-weight:600}
+.tafel th,.tafel td{border:2px solid #ced4da;width:62px;height:50px;text-align:center}
+.tafel th{background:#f1f3f5;font-size:18px}
+.tafel .cr{background:var(--hr)}
+.tafel td.cd{color:var(--hd);background:#fff5f5}
+.tafel th.cd{background:#ffc9c9}
+
+.nl{width:100%;max-width:640px;display:block;margin:6px auto}
+.nlE{font-size:20px;font-weight:700;text-anchor:middle;fill:#24324a}
+.nlM{font-size:15px;text-anchor:middle;fill:#e03131}
+.nlS{font-size:14px;fill:#5d6b82}
+.nlN{font-size:20px;font-weight:700;text-anchor:middle;fill:#7048e8}
+
+.answer{margin-top:14px}
+.display{font-size:40px;font-weight:700;text-align:center;background:#f8f9fa;border:3px solid #dee2e6;border-radius:18px;min-height:68px;padding:6px;margin:0 auto 12px;max-width:420px;letter-spacing:1px}
+.display.empty{color:#adb5bd;font-weight:400;font-size:26px;line-height:52px}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:420px;margin:0 auto}
+.pad button{font-size:30px;font-weight:600;background:#fff;border-radius:16px;height:64px;box-shadow:0 4px 0 #ced4da;border:2px solid #e9ecef}
+.pad button:active{transform:translateY(3px);box-shadow:0 1px 0 #ced4da}
+.pad .ok{background:var(--ok);color:#fff;box-shadow:0 4px 0 #237032;border-color:var(--ok)}
+.pad .del{background:#fff4e6}
+.choices{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
+.choice{font-size:24px;font-weight:600;background:#fff;border:3px solid #dee2e6;border-radius:18px;padding:14px 22px;min-width:150px;box-shadow:0 4px 0 #ced4da}
+.choice:active{transform:translateY(3px)}
+.choice.up{background:var(--mini-l);border-color:#8ce99a}
+.choice.down{background:var(--max-l);border-color:#ffc078}
+.choice.sel{border-color:var(--violet);background:#f3f0ff;box-shadow:0 4px 0 #b197fc}
+.choice.right{border-color:var(--ok);background:var(--ok-l)}
+.choice.wrong{border-color:var(--bad);background:var(--bad-l)}
+.choice:disabled{cursor:default}
+.check{display:block;margin:14px auto 0;font-size:22px;font-weight:600;background:var(--ok);color:#fff;border-radius:16px;padding:12px 30px;box-shadow:0 4px 0 #237032}
+.helpbtn{background:#fff9db;border-radius:14px;padding:8px 14px;font-size:17px;margin-top:6px;border:2px solid #ffe066}
+.fb{border-radius:18px;padding:14px 18px;margin-top:14px;font-size:19px;line-height:1.5}
+.fb.ok{background:var(--ok-l);border:3px solid #8ce99a}
+.fb.bad{background:var(--bad-l);border:3px solid #ffa8a8}
+.fb.hint{background:#fff9db;border:3px solid #ffe066}
+.fb .head{font-weight:700;font-size:22px}
+.next{display:block;margin:16px auto 0;font-size:24px;font-weight:600;background:#339af0;color:#fff;border-radius:18px;padding:14px 40px;box-shadow:0 5px 0 #1c7ed6}
+.duo{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin:6px 0}
+.say{display:flex;align-items:center;gap:8px;background:#f8f9fa;border-radius:20px;padding:8px 14px;font-size:20px;flex:1;min-width:250px}
+.say.m{background:var(--mini-l)} .say.x{background:var(--max-l)}
+.cards{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:8px 0}
+.ncard{width:58px;height:78px;border-radius:12px;background:#fff;border:3px solid var(--violet);font-size:38px;font-weight:700;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 0 #b197fc;transform:rotate(var(--r))}
+.mini-table{border-collapse:collapse;margin:8px auto;font-size:18px}
+.mini-table td{padding:4px 12px;border-bottom:1px solid #e9ecef}
+.mini-table tr.hit td{background:var(--ok-l);font-weight:600}
+
+.digits{display:flex;justify-content:center;align-items:flex-end;gap:4px;flex-wrap:wrap;margin:10px 0}
+.digits button{font-size:44px;font-weight:700;width:54px;height:70px;background:#fff;border:3px solid #dee2e6;border-radius:14px;box-shadow:0 4px 0 #ced4da}
+.digits .sep{font-size:44px;font-weight:700;padding:0 2px}
+.digits button.wrong{border-color:var(--bad);background:var(--bad-l)}
+.step2{font-size:20px;text-align:center;margin:8px 0;font-weight:600}
+.cells{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:12px}
+.cell{min-width:140px;background:#f8f9fa;border:3px solid #dee2e6;border-radius:16px;padding:6px 10px;display:flex;flex-direction:column;align-items:center}
+.cell small{font-size:16px;color:var(--soft);font-weight:600}
+.cell span{font-size:30px;font-weight:700;min-height:40px}
+.cell.act{border-color:#339af0;background:#e7f5ff;box-shadow:0 0 0 3px #a5d8ff}
+.cell.ok{border-color:var(--ok);background:var(--ok-l)}
+.cell.bad{border-color:var(--bad);background:var(--bad-l)}
+.rtab{border-collapse:collapse;margin:8px auto;font-size:20px}
+.rtab td,.rtab th{border:2px solid #ced4da;padding:6px 12px;text-align:center}
+.rtab th{background:#d0ebff}
+.scene{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:6px}
+.scene .bubble{font-size:17px}
+.rule.about{background:#fff0f6}
+
+/* Learn */
+.learnbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:center;margin-top:10px}
+.learnbar input{font-family:inherit;font-size:22px;width:170px;padding:8px 12px;border-radius:14px;border:3px solid #dee2e6;text-align:center}
+.btn{font-size:19px;font-weight:600;background:#fff;border-radius:14px;padding:10px 16px;border:3px solid #dee2e6;box-shadow:0 3px 0 #ced4da}
+.btn.primary{background:#339af0;color:#fff;border-color:#339af0;box-shadow:0 3px 0 #1c7ed6}
+.steps{list-style:none;padding:0;margin:10px 0;counter-reset:s}
+.steps li{counter-increment:s;display:flex;gap:12px;align-items:flex-start;font-size:20px;line-height:1.45;padding:10px 12px;border-radius:16px;margin-bottom:8px;background:#f8f9fa}
+.steps li:before{content:counter(s);flex:none;width:34px;height:34px;border-radius:50%;background:#339af0;color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center}
+.steps li.up{background:var(--mini-l)} .steps li.down{background:var(--max-l)}
+.note{background:#fff9db;border-radius:14px;padding:10px 14px;font-size:18px;margin-top:8px}
+
+.endbox{text-align:center}
+.stars{font-size:64px;letter-spacing:8px;margin:10px 0}
+.endbtns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+/* große Bildschirme / Tafel */
+@media (min-width:1200px){
+  .q{font-size:clamp(26px,2vw,36px)}
+  .big{font-size:clamp(46px,4vw,70px)}
+  .bubble{font-size:21px}
+  .pad{max-width:480px}
+  .pad button{height:clamp(64px,8vh,88px);font-size:36px}
+  .display{max-width:480px;font-size:46px}
+  .choice{font-size:28px;padding:18px 26px}
+  .fb{font-size:21px}
+  .tafel{font-size:32px}.tafel th,.tafel td{width:76px;height:60px}
+  .steps li{font-size:23px}
+  .modes{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+}
+@media (max-width:560px){.char{width:70px;height:70px}.tafel th,.tafel td{width:46px;height:42px;font-size:20px}.pad button{height:56px}}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+/* ---------- Grundlagen ---------- */
+const POS=[10,100,1000,10000,100000];
+const NAME={1:'Einer',10:'Zehner',100:'Hunderter',1000:'Tausender',10000:'Zehntausender',100000:'Hunderttausender'};
+const SHORT={1:'E',10:'Z',100:'H',1000:'T',10000:'ZT',100000:'HT'};
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+const fmt=n=>String(n).replace(/\B(?=(\d{3})+(?!\d))/g,'.');
+const roundTo=(n,p)=>Math.floor((n+p/2)/p)*p;
+const digitAt=(n,pos)=>Math.floor(n/pos)%10;
+const setDigit=(n,pos,d)=>n-digitAt(n,pos)*pos+d*pos;
+const dz=p=>NAME[p/10]+'ziffer';
+const nb=p=>'Nachbar'+NAME[p].toLowerCase();
+
+function makeNumber(p,special=true){
+  const lens={10:[3,3,4],100:[4,4,5],1000:[4,5,6],10000:[5,6,6],100000:[6]}[p];
+  for(let t=0;t<200;t++){
+    const L=pick(lens); let n=rnd(10**(L-1),10**L-1);
+    const r=Math.random();
+    if(special&&r<0.18) n=setDigit(n,p/10,5);
+    else if(special&&r<0.28){n=setDigit(n,p,9);n=setDigit(n,p/10,rnd(5,9));}
+    if(n%p===0||n<p||n>=1000000) continue;
+    return n;
+  }
+  return 3*p+7*(p/10);
+}
+
+/* Zahl mit markierten Ziffern */
+function fmtHi(n,p,o={}){
+  const {r=true,d=true,blank=false}=o; const s=String(n),L=s.length; let out='';
+  for(let i=0;i<L;i++){
+    const pos=10**(L-1-i);
+    if(i>0&&(L-i)%3===0) out+='.';
+    const ch=s[i];
+    if(blank&&pos===p/10){out+='<span class="blank">?</span>';continue;}
+    if(r&&pos===p) out+=`<span class="hr">${ch}</span>`;
+    else if(d&&pos===p/10) out+=`<span class="hd">${ch}</span>`;
+    else out+=ch;
+  }
+  return out;
+}
+
+function tafel(n,p,o={}){
+  const {r=true,d=true,mask=false}=o; const cols=[100000,10000,1000,100,10,1]; const L=String(n).length;
+  const cls=c=>(r&&c===p)?'cr':(d&&c===p/10)?'cd':'';
+  let h='<table class="tafel" aria-label="Stellenwerttafel"><tr>'+cols.map(c=>`<th class="${cls(c)}">${SHORT[c]}</th>`).join('')+'</tr><tr>';
+  h+=cols.map(c=>{let v=c<=10**(L-1)?digitAt(n,c):'';if(mask&&c>=p&&v!=='')v='?';return `<td class="${cls(c)}">${v}</td>`;}).join('');
+  return h+'</tr></table>';
+}
+
+function numberLine(n,p,mark=true){
+  const L=Math.floor(n/p)*p,U=L+p,M=L+p/2;
+  const x=v=>40+(v-L)/p*520;
+  let s=`<svg class="nl" viewBox="0 0 600 142" role="img" aria-label="Zahlenstrahl von ${fmt(L)} bis ${fmt(U)}">`;
+  s+=`<line x1="40" y1="70" x2="300" y2="70" stroke="#d9a06b" stroke-width="9" stroke-linecap="round"/>`;
+  s+=`<line x1="300" y1="70" x2="560" y2="70" stroke="#8fd16f" stroke-width="9" stroke-linecap="round"/>`;
+  for(let i=0;i<=10;i++){const xx=40+i*52,big=i===0||i===10,mid=i===5;
+    s+=`<line x1="${xx}" y1="${big?50:mid?48:60}" x2="${xx}" y2="${big?90:mid?92:80}" stroke="${mid?'#e03131':'#333'}" stroke-width="${big||mid?4:2}" stroke-linecap="round"/>`;}
+  s+=`<text x="40" y="114" class="nlE">${fmt(L)}</text><text x="560" y="114" class="nlE">${fmt(U)}</text>`;
+  s+=`<text x="300" y="112" class="nlM">Mitte: ${fmt(M)}</text>`;
+  s+=`<text x="40" y="138" class="nlS" text-anchor="start">⬇ abrunden (Max)</text><text x="560" y="138" class="nlS" text-anchor="end">(Mini) aufrunden ⬆</text>`;
+  if(mark){const xm=x(n),xl=Math.max(70,Math.min(530,xm));
+    s+=`<polygon points="${xm-11},28 ${xm+11},28 ${xm},48" fill="#7048e8"/><text x="${xl}" y="22" class="nlN">${fmt(n)}</text>`;}
+  return s+'</svg>';
+}
+
+/* ---------- Figuren ---------- */
+const MINI_SVG=`<svg class="char" viewBox="0 0 100 100" aria-label="Mini, der Frosch"><ellipse cx="50" cy="94" rx="30" ry="4" fill="#000" opacity=".08"/><circle cx="31" cy="30" r="15" fill="#5cbf3f"/><circle cx="69" cy="30" r="15" fill="#5cbf3f"/><ellipse cx="50" cy="62" rx="40" ry="31" fill="#5cbf3f"/><ellipse cx="50" cy="76" rx="24" ry="13" fill="#b5e88f"/><circle cx="31" cy="30" r="10" fill="#fff"/><circle cx="69" cy="30" r="10" fill="#fff"/><circle cx="33" cy="32" r="5.5" fill="#222"/><circle cx="67" cy="32" r="5.5" fill="#222"/><circle cx="35" cy="29" r="1.8" fill="#fff"/><circle cx="69" cy="29" r="1.8" fill="#fff"/><path d="M30 60 Q50 76 70 60" stroke="#2b6e1f" stroke-width="4" fill="none" stroke-linecap="round"/><circle cx="22" cy="58" r="6" fill="#ff8fa3" opacity=".55"/><circle cx="78" cy="58" r="6" fill="#ff8fa3" opacity=".55"/><path d="M40 12 L45 3 L50 11 L55 3 L60 12 Z" fill="#fcc419"/></svg>`;
+const MAX_SVG=`<svg class="char" viewBox="0 0 100 100" aria-label="Max, der Hund"><ellipse cx="50" cy="94" rx="30" ry="4" fill="#000" opacity=".08"/><ellipse cx="20" cy="48" rx="12" ry="25" fill="#7a4a24" transform="rotate(14 20 48)"/><ellipse cx="80" cy="48" rx="12" ry="25" fill="#7a4a24" transform="rotate(-14 80 48)"/><circle cx="50" cy="50" r="33" fill="#c98a4b"/><ellipse cx="64" cy="42" rx="11" ry="10" fill="#a8692f"/><ellipse cx="50" cy="66" rx="19" ry="15" fill="#f6e7d4"/><circle cx="38" cy="43" r="5" fill="#222"/><circle cx="63" cy="43" r="5" fill="#222"/><circle cx="39.5" cy="41.5" r="1.6" fill="#fff"/><circle cx="64.5" cy="41.5" r="1.6" fill="#fff"/><ellipse cx="50" cy="58" rx="7" ry="5" fill="#222"/><path d="M42 67 Q50 73 58 67" stroke="#222" stroke-width="3" fill="none" stroke-linecap="round"/><ellipse cx="50" cy="75" rx="5" ry="6" fill="#ff6b81"/><path d="M30 86 Q50 96 70 86" stroke="#e03131" stroke-width="5" fill="none" stroke-linecap="round"/><circle cx="50" cy="92" r="4" fill="#fcc419"/></svg>`;
+const charSvg=(who,cls='')=>(who==='mini'?MINI_SVG:MAX_SVG).replace('class="char"',`class="char ${cls}"`);
+const WHO={mini:'Mini',max:'Max'};
+
+/* ---------- Erklärungen ---------- */
+function explainRound(n,p){
+  const d=digitAt(n,p/10),up=d>=5,r=roundTo(n,p);
+  let s=`Rundungsstelle: <span class="hr">${NAME[p]}</span>. Rechts daneben steht beim ${NAME[p/10]} eine <span class="hd">${d}</span>. `;
+  s+=up?`${d} ist 5 oder mehr → <b>aufrunden</b> ⬆ (Mini hüpft hoch).`:`${d} ist kleiner als 5 → <b>abrunden</b> ⬇ (Max buddelt runter).`;
+  s+=`<div class="big" style="font-size:34px">${fmtHi(n,p)} ≈ ${fmt(r)}</div>`;
+  if(up&&digitAt(n,p)===9) s+=`<div class="note">Achtung Übertrag: Die 9 beim ${NAME[p]} wird zur 10. Dadurch wird auch die Stelle links daneben um 1 größer.</div>`;
+  return s;
+}
+
+/* ---------- Aufgaben ---------- */
+const STORIES=[
+  'Beim Stadtfest wurden <b>{n}</b> Besucher gezählt. Max will die Zahl für die Zeitung runden.',
+  'Mini hat in ihrem Leben schon <b>{n}</b> Mücken gefangen. 🦟',
+  'Die Stadtbücherei hat <b>{n}</b> Bücher.',
+  'Max ist mit seinem Herrchen <b>{n}</b> Schritte gelaufen. 🐾',
+  'Ein Wohnmobil ist schon <b>{n}</b> km gefahren. 🚐',
+  'Im Fußballstadion sitzen <b>{n}</b> Fans. ⚽',
+  'Die Schule hat <b>{n}</b> Kronkorken gesammelt.',
+  'Ein Lottogewinn beträgt <b>{n}</b> €. 💶',
+  'Im Froschteich leben <b>{n}</b> Kaulquappen.',
+  'Ein Bauer erntet <b>{n}</b> Äpfel. 🍎'
+];
+const sp=()=>pick(['mini','max']);
+
+function genUpDown(p){
+  const n=makeNumber(p),up=digitAt(n,p/10)>=5,who=sp();
+  return {type:'Auf oder ab?',speaker:who,bubble:pick(['Was meinst du?','Hüpfen oder buddeln?','Schau genau hin!']),
+    q:`Runde <b>${fmt(n)}</b> auf <b>${NAME[p]}</b>.<br>Muss man auf- oder abrunden?`,
+    kind:'choice',options:['⬆ aufrunden','⬇ abrunden'],optCls:['up','down'],answer:up?0:1,
+    explain:explainRound(n,p)};
+}
+function genRound(p){
+  const n=makeNumber(p),r=roundTo(n,p),who=sp();
+  const story=Math.random()<.5;
+  const q=story?pick(STORIES).replace('{n}',fmt(n))+`<br>Runde auf <b>${NAME[p]}</b>.`:`Runde <b>${fmt(n)}</b> auf <b>${NAME[p]}</b>.`;
+  return {type:'Runde!',speaker:who,bubble:story?'Eine Sachaufgabe!':'Du schaffst das!',q,kind:'input',answer:r,
+    hint:`Schau auf die <b>${dz(p)}</b> – das ist die Ziffer rechts vom ${NAME[p]}.`,
+    help:tafel(n,p),explain:explainRound(n,p)};
+}
+function genLine(p){
+  const n=makeNumber(p),L=Math.floor(n/p)*p,U=L+p,up=digitAt(n,p/10)>=5,who=sp();
+  const dl=n-L,du=U-n;
+  const where=dl===du?`${fmt(n)} liegt genau in der Mitte. Dann wird immer aufgerundet!`:`${fmt(n)} liegt näher an ${fmt(dl<du?L:U)}.`;
+  return {type:'Zahlenstrahl',speaker:who,bubble:'Wohin gehört die Zahl?',
+    q:`Wo liegt <b>${fmt(n)}</b>? Zu welchem <b>${nb(p)}</b> wird gerundet?`,
+    visual:numberLine(n,p),kind:'choice',options:[fmt(L),fmt(U)],optCls:['down','up'],answer:up?1:0,
+    explain:`${where}<br>`+explainRound(n,p)};
+}
+function genWho(p){
+  const n=makeNumber(p),r=roundTo(n,p),L=Math.floor(n/p)*p,U=L+p;
+  const errs=[{v:r===U?L:U,why:r===U?'hat abgerundet – aber man muss hier aufrunden.':'hat aufgerundet – aber man muss hier abrunden.'}];
+  if(p>=100){const v=roundTo(n,p/10);if(v!==r)errs.push({v,why:`hat auf ${NAME[p/10]} gerundet statt auf ${NAME[p]}.`});}
+  if(p<=10000&&p*10<n){const v=roundTo(n,p*10);if(v!==r&&v>0)errs.push({v,why:`hat auf ${NAME[p*10]} gerundet statt auf ${NAME[p]}.`});}
+  if(r===U)errs.push({v:L,why:'hat die Ziffern einfach abgeschnitten. Man muss aber auf die Ziffer rechts schauen!'});
+  const e=pick(errs),miniRight=Math.random()<.5;
+  const miniV=miniRight?r:e.v,maxV=miniRight?e.v:r;
+  const wrongName=miniRight?'Max':'Mini';
+  return {type:'Wer hat recht?',speaker:miniRight?'max':'mini',bubble:'Wir sind uns nicht einig …',
+    q:`<b>${fmt(n)}</b> soll auf <b>${NAME[p]}</b> gerundet werden. Wer hat recht?`,
+    visual:`<div class="duo"><div class="say m">${charSvg('mini','sm')}„Das ergibt <b>${fmt(miniV)}</b>!“</div><div class="say x">${charSvg('max','sm')}„Nein, <b>${fmt(maxV)}</b>!“</div></div>`,
+    kind:'choice',options:['🐸 Mini','🐶 Max'],answer:miniRight?0:1,
+    explain:`${wrongName} ${e.why}<br>`+explainRound(n,p)};
+}
+
+/* Denkaufgaben */
+function kMinMax(p){
+  let R=roundTo(makeNumber(p,false),p); if(R>=1000000)R-=p;
+  const small=Math.random()<.5,ans=small?R-p/2:R+p/2-1;
+  const ex=small
+    ?`Die kleinste Zahl ist <b>${fmt(R-p/2)}</b>. Ihre ${dz(p)} ist eine 5 – bei 5 wird aufgerundet auf ${fmt(R)}.<br>Eine Zahl weniger (${fmt(R-p/2-1)}) würde schon auf ${fmt(R-p)} abgerundet.`
+    :`Die größte Zahl ist <b>${fmt(R+p/2-1)}</b>. Ihre ${dz(p)} ist eine 4 – also wird abgerundet auf ${fmt(R)}.<br>Eine Zahl mehr (${fmt(R+p/2)}) würde schon auf ${fmt(R+p)} aufgerundet.`;
+  return {type:'Denkaufgabe',speaker:'mini',bubble:'Ich habe eine Geheimzahl! 🤫',
+    q:`Mini rundet ihre Geheimzahl auf <b>${NAME[p]}</b> und erhält <b>${fmt(R)}</b>.<br>Was ist die <b>${small?'kleinste':'größte'}</b> Zahl, die Mini gedacht haben kann?`,
+    visual:rechenstrich(R,p),
+    kind:'input',answer:ans,
+    hint:small?`Bei welcher ${dz(p)} wird gerade schon <b>auf</b>gerundet?`:`Bei welcher ${dz(p)} wird gerade noch <b>ab</b>gerundet?`,
+    explain:ex};
+}
+function kGap(p){
+  const n=makeNumber(p),r=roundTo(n,p),L=Math.floor(n/p)*p,U=L+p,up=r===U;
+  const ok=up?[5,6,7,8,9]:[0,1,2,3,4];
+  return {type:'Denkaufgabe',speaker:'max',bubble:'Oh nein, ich habe eine Ziffer verbuddelt! 🦴',
+    q:`Auf <b>${NAME[p]}</b> gerundet ergibt die Zahl <b>${fmt(r)}</b>.<div class="big">${fmtHi(n,p,{r:false,d:false,blank:true})}</div>Welche Ziffern können im Kästchen stehen? Tippe <b>alle</b> passenden an.`,
+    kind:'multi',options:[0,1,2,3,4,5,6,7,8,9].map(v=>({label:String(v),value:v})),answer:ok,
+    hint:'Wird hier auf- oder abgerundet? Vergleiche die Zahl mit dem Ergebnis.',
+    explain:`Ist die ${dz(p)} 0, 1, 2, 3 oder 4, wird auf ${fmt(L)} abgerundet. Ist sie 5, 6, 7, 8 oder 9, wird auf ${fmt(U)} aufgerundet.<br>Das Ergebnis ist ${fmt(r)} – also passen: <b>${ok.join(', ')}</b>.`};
+}
+function kWhich(p){
+  let R=roundTo(makeNumber(p,false),p); if(R>=1000000)R-=p;
+  const h=p/2;
+  const c=new Set([R-h,R+h-1,R+rnd(-h+1,h-2),R+h,R-h-1,(Math.random()<.5?R-p+rnd(0,h-2):R+p+rnd(-h+1,0))]);
+  const vals=shuffle([...c].filter(v=>v>0&&v<1000000));
+  const ok=vals.filter(v=>roundTo(v,p)===R);
+  return {type:'Denkaufgabe',speaker:sp(),bubble:'Finde alle!',
+    q:`Welche Zahlen ergeben auf <b>${NAME[p]}</b> gerundet genau <b>${fmt(R)}</b>? Tippe <b>alle</b> passenden an.`,
+    kind:'multi',options:vals.map(v=>({label:fmt(v),value:v})),answer:ok,
+    hint:`Runde jede Zahl einzeln. Achte besonders auf die ${dz(p)}!`,
+    explain:`Auf ${fmt(R)} werden alle Zahlen von <b>${fmt(R-h)}</b> bis <b>${fmt(R+h-1)}</b> gerundet.<br><table class="mini-table">${vals.slice().sort((a,b)=>a-b).map(v=>`<tr class="${roundTo(v,p)===R?'hit':''}"><td>${fmtHi(v,p,{r:false})}</td><td>≈ ${fmt(roundTo(v,p))}</td></tr>`).join('')}</table>`};
+}
+function kWhere(p){
+  for(let t=0;t<300;t++){
+    const n=makeNumber(pick(POS),false);
+    const avail=POS.filter(q=>q<n);
+    if(avail.length<2)continue;
+    const target=avail.includes(p)?p:pick(avail);
+    const r=roundTo(n,target); if(r===n)continue;
+    if(avail.some(q=>q!==target&&roundTo(n,q)===r))continue;
+    const ctx=pick([['Besucher','Beim Konzert'],['Fans','Im Stadion'],['Bücher','In der Bücherei'],['Zuschauer','Beim Stadtlauf']]);
+    return {type:'Denkaufgabe',speaker:'max',bubble:'Ich bin Zeitungsreporter! 📰',
+      q:`${ctx[1]} waren es genau <b>${fmt(n)}</b> ${ctx[0]}.<br>In der Zeitung steht: „Rund <b>${fmt(r)}</b> ${ctx[0]}“.<br>Auf welche Stelle wurde gerundet?`,
+      kind:'choice',options:avail.map(q=>NAME[q]),answer:avail.indexOf(target),
+      explain:`Probiere alle Stellen aus:<table class="mini-table">${avail.map(q=>`<tr class="${q===target?'hit':''}"><td>auf ${NAME[q]}</td><td>${fmt(roundTo(n,q))}</td></tr>`).join('')}</table>Nur beim Runden auf <b>${NAME[target]}</b> kommt ${fmt(r)} heraus.`};
+  }
+  return kGap(p);
+}
+function kWhoAmI(p){
+  const n=makeNumber(p),R=roundTo(n,p),d=digitAt(n,p/10),up=d>=5;
+  const lower=[];for(let pos=p/10;pos>=1;pos/=10)lower.push({pos,d:digitAt(n,pos)});
+  let txt;
+  if(lower.length===1)txt=`Meine ${NAME[1]}ziffer ist <b>${lower[0].d}</b>.`;
+  else if(lower.length===2)txt=`Meine ${NAME[lower[0].pos]}ziffer ist <b>${lower[0].d}</b> und meine ${NAME[1]}ziffer ist <b>${lower[1].d}</b>.`;
+  else txt=`Rechts vom ${NAME[p]} stehen bei mir die Ziffern <b>${lower.map(x=>x.d).join(' – ')}</b>.`;
+  return {type:'Wer bin ich?',speaker:'mini',bubble:'Rate mal, wer ich bin! 🐸',
+    q:`Ich bin eine Zahl. Auf <b>${NAME[p]}</b> gerundet bin ich <b>${fmt(R)}</b>.<br>${txt}<br>Wer bin ich?`,
+    visual:tafel(n,p,{mask:true}),
+    kind:'input',answer:n,
+    hint:`Wurde auf- oder abgerundet? Schau auf die ${dz(p)}: ${d}.`,
+    explain:`Die ${dz(p)} ist ${d}. ${up?`Das heißt: Es wurde <b>aufgerundet</b>. Vor dem Runden war es also ein ${NAME[p]} weniger als bei ${fmt(R)}.`:`Das heißt: Es wurde <b>abgerundet</b>. Die Stellen links bleiben wie bei ${fmt(R)}.`}<div class="big" style="font-size:34px">${fmtHi(n,p)}</div>`};
+}
+function kCount(p){
+  let R=roundTo(makeNumber(p,false),p); if(R>=1000000)R-=p;
+  return {type:'Denkaufgabe',speaker:'max',bubble:'Das ist knifflig! 🤔',
+    q:`Wie viele verschiedene Zahlen ergeben auf <b>${NAME[p]}</b> gerundet genau <b>${fmt(R)}</b>?`,
+    kind:'input',answer:p,
+    hint:`Suche die kleinste und die größte passende Zahl. Zähle dann.`,
+    explain:`Von <b>${fmt(R-p/2)}</b> bis <b>${fmt(R+p/2-1)}</b> – das sind genau <b>${fmt(p)}</b> Zahlen.<br>Spannend: Es sind immer genau so viele, wie der Stellenwert groß ist!`};
+}
+function kDouble(p){
+  if(p<100)return kWhich(p);
+  const base=rnd(1,Math.floor(999999/p)-1)*p;
+  const n=base+4*(p/10)+rnd(p/20,p/10-1);
+  const r1=roundTo(n,p/10),r2=roundTo(r1,p),miniDirect=Math.random()<.5;
+  const st=`erst auf ${NAME[p/10]}: ${fmt(r1)}, dann auf ${NAME[p]}: <b>${fmt(r2)}</b>`;
+  const di=`direkt auf ${NAME[p]}: <b>${fmt(base)}</b>`;
+  return {type:'Wer hat recht?',speaker:'max',bubble:'Ich habe einen Trick! 😎',
+    q:`<b>${fmt(n)}</b> soll auf <b>${NAME[p]}</b> gerundet werden. Wer hat recht?`,
+    visual:`<div class="duo"><div class="say m">${charSvg('mini','sm')}<span>Ich runde ${miniDirect?di:st}</span></div><div class="say x">${charSvg('max','sm')}<span>Ich runde ${miniDirect?st:di}</span></div></div>`,
+    kind:'choice',options:['🐸 Mini','🐶 Max'],answer:miniDirect?0:1,
+    explain:`Man darf <b>nicht in Schritten</b> runden! Man schaut immer auf die <b>ursprüngliche</b> Zahl.<br>`+explainRound(n,p)};
+}
+function kCards(p){
+  const cnt={10:4,100:4,1000:5,10000:6,100000:6}[p];
+  const digs=shuffle([1,2,3,4,5,6,7,8,9]).slice(0,cnt);
+  const big=Math.random()<.5;
+  const num=+digs.slice().sort((a,b)=>big?b-a:a-b).join('');
+  const r=roundTo(num,p);
+  return {type:'Ziffernkarten',speaker:'mini',bubble:'Ich lege Karten! 🃏',
+    q:`Lege mit <b>allen</b> Karten die <b>${big?'größte':'kleinste'}</b> Zahl. Runde sie dann auf <b>${NAME[p]}</b>.`,
+    visual:`<div class="cards">${digs.map(d=>`<div class="ncard" style="--r:${rnd(-6,6)}deg">${d}</div>`).join('')}</div>`,
+    kind:'input',answer:r,
+    hint:big?'Hast du zuerst die größte Zahl gelegt? Die größte Ziffer kommt ganz nach vorne.':'Hast du zuerst die kleinste Zahl gelegt? Die kleinste Ziffer kommt ganz nach vorne.',
+    explain:`${big?'Größte':'Kleinste'} Zahl: <b>${fmt(num)}</b><br>`+explainRound(num,p)};
+}
+function kRule(p){
+  const up=Math.random()<.5,ok=up?[5,6,7,8,9]:[0,1,2,3,4];
+  return {type:'Satz ergänzen',speaker:up?'mini':'max',bubble:'Wie heißt die Regel?',
+    q:`Du rundest auf <b>${NAME[p]}</b>. Ergänze den Satz:<br>„Ich runde <b>${up?'auf':'ab'}</b>, wenn die <b>${dz(p)}</b> eine … ist.“<br>Tippe <b>alle</b> passenden Ziffern an.`,
+    kind:'multi',options:[0,1,2,3,4,5,6,7,8,9].map(v=>({label:String(v),value:v})),answer:ok,
+    hint:'Denk an Mini und Max: Wer hüpft hoch, wer buddelt runter?',
+    explain:`Ich runde <b>ab</b> bei 0, 1, 2, 3, 4. Ich runde <b>auf</b> bei 5, 6, 7, 8, 9.<br>Also: „Ich runde ${up?'auf':'ab'}, wenn die ${dz(p)} eine <b>${ok.join(', ')}</b> ist.“`};
+}
+const KNOBEL=[kMinMax,kGap,kWhich,kWhere,kWhoAmI,kCount,kDouble,kCards,kRule];
+
+/* Markieren & runden (wie im Heft: Ziffer rechts daneben markieren) */
+function genMark(p){
+  const n=makeNumber(p);
+  return {type:'Markieren & runden',speaker:sp(),bubble:'Erst markieren, dann runden!',
+    q:`Runde <b>${fmt(n)}</b> auf <b>${NAME[p]}</b>.<br><b>1.</b> Tippe die Ziffer an, auf die du schauen musst.`,
+    kind:'mark',n,p,answer:roundTo(n,p),
+    hint:`Schau noch einmal auf die ${dz(p)}.`,explain:explainRound(n,p)};
+}
+
+/* Rundungstabelle: eine Zahl auf HT, ZT, T, H runden */
+function genTable(){
+  let n;do{n=rnd(10000,999999);}while(n%100===0);
+  if(Math.random()<.3)n=setDigit(n,100,rnd(5,9)),n=setDigit(n,1000,9);
+  const cols=[100000,10000,1000,100];
+  return {type:'Rundungstabelle',speaker:sp(),bubble:'Eine Zahl – vier Mal runden!',
+    q:`Runde <b>${fmt(n)}</b> auf die angegebenen Stellen.`,
+    visual:tafel(n,0,{r:false,d:false}),
+    kind:'cells',cells:cols.map(q=>({label:`auf ${SHORT[q]}`,sol:roundTo(n,q),check:v=>v===roundTo(n,q)})),
+    hint:'Gehe Spalte für Spalte vor: Markiere jeweils die Ziffer <b>rechts</b> von der Rundungsstelle.',
+    explain:`<table class="rtab"><tr><th></th>${cols.map(q=>`<th>${SHORT[q]}</th>`).join('')}</tr><tr><td><b>${fmt(n)}</b></td>${cols.map(q=>`<td>${fmt(roundTo(n,q))}</td>`).join('')}</tr></table>`+
+      cols.map(q=>`auf ${NAME[q]}: ${fmtHi(n,q)} ≈ ${fmt(roundTo(n,q))}`).join('<br>')};
+}
+
+/* Rechenstrich um eine runde Zahl R */
+function rechenstrich(R,p,pts=[],range=false){
+  const L=R-p,x=v=>40+(v-L)/(2*p)*520,h=p/2;
+  let s=`<svg class="nl" viewBox="0 0 600 150" role="img" aria-label="Rechenstrich von ${fmt(L)} bis ${fmt(R+p)}">`;
+  if(range)s+=`<rect x="${x(R-h)}" y="56" width="${x(R+h)-x(R-h)}" height="28" rx="8" fill="#8fd16f" opacity=".45"/><text x="${x(R)}" y="146" class="nlM" style="fill:#2f9e44;font-weight:600">alle diese Zahlen ≈ ${fmt(R)}</text>`;
+  s+=`<line x1="40" y1="70" x2="560" y2="70" stroke="#495057" stroke-width="4" stroke-linecap="round"/>`;
+  for(let i=0;i<=20;i++){const xx=40+i*26,big=i%10===0,mid=i%5===0;
+    s+=`<line x1="${xx}" y1="${big?50:mid?56:62}" x2="${xx}" y2="${big?90:mid?84:78}" stroke="${!big&&mid?'#e03131':'#333'}" stroke-width="${big?4:mid?3:1.5}"/>`;}
+  s+=`<text x="40" y="112" class="nlE">${fmt(L)}</text><text x="300" y="112" class="nlE">${fmt(R)}</text><text x="560" y="112" class="nlE">${fmt(R+p)}</text>`;
+  if(range)s+=`<text x="170" y="104" class="nlM">${fmt(R-h)}</text><text x="430" y="104" class="nlM">${fmt(R+h)}</text>`;
+  pts.forEach((v,k)=>{if(v<L||v>R+p)return;const xv=x(v),y=k%2?14:30;
+    s+=`<line x1="${xv}" y1="${y+4}" x2="${xv}" y2="66" stroke="#7048e8" stroke-width="2"/><circle cx="${xv}" cy="70" r="7" fill="#7048e8"/><text x="${Math.max(60,Math.min(540,xv))}" y="${y}" class="nlN" style="font-size:17px">${fmt(v)}</text>`;});
+  return s+'</svg>';
+}
+const CTX=[['Zuschauer','beim Fußballspiel'],['Besucher','im Freibad'],['Läufer','beim Stadtlauf'],['Gäste','beim Weinfest'],['Fans','beim Konzert']];
+function genStrich(p){
+  let R=roundTo(makeNumber(p,false),p);if(R<p)R=p;if(R+p>1000000)R-=p;
+  const h=p/2,kind=pick(['auf','ab','bereich','fast','ueber','rund']),c=pick(CTX);
+  const base={type:'Rechenstrich',speaker:sp(),visual:rechenstrich(R,p),hint:''};
+  const n3=lab=>[1,2,3].map(i=>({label:`${i}. Zahl`,check:lab}));
+  if(kind==='auf'||kind==='ab'){
+    const up=kind==='auf';
+    return {...base,bubble:'Nach dem Prüfen zeige ich deine Zahlen am Rechenstrich!',
+      q:`Du rundest auf <b>${NAME[p]}</b>. Nenne <b>3 verschiedene Zahlen</b>, die auf <b>${fmt(R)}</b> <b>${up?'auf':'ab'}gerundet</b> werden.`,
+      kind:'cells',distinct:true,cells:n3(up?v=>v>=R-h&&v<R:v=>v>R&&v<=R+h-1),
+      plot:vals=>rechenstrich(R,p,vals,false),
+      hint:up?`Aufgerundet wird eine Zahl, die <b>kleiner</b> als ${fmt(R)} ist – aber nicht kleiner als ${fmt(R-h)}.`:`Abgerundet wird eine Zahl, die <b>größer</b> als ${fmt(R)} ist – aber kleiner als ${fmt(R+h)}.`,
+      explain:up?`Auf ${fmt(R)} <b>auf</b>gerundet werden alle Zahlen von <b>${fmt(R-h)}</b> bis <b>${fmt(R-1)}</b>. Sie liegen links von ${fmt(R)}, aber rechts von der Mitte.`
+               :`Auf ${fmt(R)} <b>ab</b>gerundet werden alle Zahlen von <b>${fmt(R+1)}</b> bis <b>${fmt(R+h-1)}</b>. Sie liegen rechts von ${fmt(R)}, aber noch vor der Mitte ${fmt(R+h)}.`};
+  }
+  if(kind==='bereich'){
+    return {...base,bubble:'Wo fängt der Bereich an, wo hört er auf?',
+      q:`Du rundest auf <b>${NAME[p]}</b>. Welche Zahlen werden alle zu <b>${fmt(R)}</b> gerundet?<br>Gib die kleinste und die größte Zahl an.`,
+      kind:'cells',cells:[{label:'kleinste Zahl',sol:R-h,check:v=>v===R-h},{label:'größte Zahl',sol:R+h-1,check:v=>v===R+h-1}],
+      plot:()=>rechenstrich(R,p,[R-h,R+h-1],true),
+      hint:`Bei der ${dz(p)} 5 wird schon aufgerundet, bei 4 noch abgerundet.`,
+      explain:`Der Bereich geht von <b>${fmt(R-h)}</b> (aufrunden) bis <b>${fmt(R+h-1)}</b> (abrunden). ${fmt(R+h)} gehört nicht mehr dazu – das wird schon auf ${fmt(R+p)} aufgerundet.`};
+  }
+  const W={fast:['Fast',v=>v>=R-h&&v<R,`„Fast“ heißt: etwas <b>weniger</b> als ${fmt(R)}. Es wurde also <b>aufgerundet</b>. Möglich sind alle Zahlen von <b>${fmt(R-h)}</b> bis <b>${fmt(R-1)}</b>.`],
+           ueber:['Über',v=>v>R&&v<=R+h-1,`„Über“ heißt: etwas <b>mehr</b> als ${fmt(R)}. Es wurde also <b>abgerundet</b>. Möglich sind alle Zahlen von <b>${fmt(R+1)}</b> bis <b>${fmt(R+h-1)}</b>.`],
+           rund:['Rund',v=>v>=R-h&&v<=R+h-1,`„Rund“ heißt: ungefähr. Möglich sind alle Zahlen von <b>${fmt(R-h)}</b> bis <b>${fmt(R+h-1)}</b>.`]}[kind];
+  return {...base,speaker:'max',bubble:'Ich bin Reporter! 📰',
+    q:`In der Zeitung steht: „${W[0]} <b>${fmt(R)}</b> ${c[0]} waren ${c[1]}.“<br>Der Reporter hat auf <b>${NAME[p]}</b> gerundet. Wie viele ${c[0]} könnten es <b>genau</b> gewesen sein?`,
+    kind:'cells',cells:[{label:'genaue Zahl',check:W[1]}],
+    plot:vals=>rechenstrich(R,p,vals,kind==='rund'),
+    hint:kind==='fast'?'„Fast“ – waren es mehr oder weniger?':kind==='ueber'?'„Über“ – waren es mehr oder weniger?':`Die Zahl muss auf ${NAME[p]} gerundet ${fmt(R)} ergeben.`,
+    explain:W[2]};
+}
+
+/* Gerundet oder genau? */
+const GENAU=[
+  ['Beim Stadtfest waren etwa 12.000 Gäste.',1,'„etwa“ zeigt: Die Zahl ist gerundet.'],
+  ['Das Freibad hatte im Sommer rund 80.000 Besucher.',1,'„rund“ zeigt: Die Zahl ist gerundet.'],
+  ['Bis zum Meer sind es ungefähr 500 km.',1,'„ungefähr“ zeigt: Die Zahl ist gerundet.'],
+  ['Im Stadion jubelten fast 40.000 Fans.',1,'„fast“ zeigt: Es waren etwas weniger – gerundet.'],
+  ['Den Film haben über 200.000 Menschen gesehen.',1,'„über“ zeigt: Es waren etwas mehr – gerundet.'],
+  ['Max hat schon knapp 1.000 Knochen vergraben.',1,'„knapp“ zeigt: Es sind etwas weniger – gerundet.'],
+  ['Ein Baum hat 100.000 Blätter.',1,'Niemand zählt alle Blätter genau. Die runde Zahl ist geschätzt bzw. gerundet.'],
+  ['In unserer Stadt leben 35.000 Menschen.',1,'Einwohnerzahlen ändern sich ständig. So eine runde Zahl ist gerundet.'],
+  ['Der Wanderweg ist 8 km lang.',1,'Wanderwege sind nie auf den Meter genau 8 km lang – die Angabe ist gerundet.'],
+  ['Ein Tag hat 24 Stunden.',0,'Das ist immer genau so festgelegt.'],
+  ['Eine Minute hat 60 Sekunden.',0,'Das ist immer genau so festgelegt.'],
+  ['Ein Kilometer hat 1.000 Meter.',0,'Die Zahl sieht rund aus – ist aber <b>genau</b>! 1 km sind immer genau 1.000 m.'],
+  ['Ein Kilogramm hat 1.000 Gramm.',0,'Die Zahl sieht rund aus – ist aber <b>genau</b>! 1 kg sind immer genau 1.000 g.'],
+  ['Unsere Klasse hat 24 Kinder.',0,'Die Kinder kann man genau zählen.'],
+  ['Das Eis kostet 1,30 €.',0,'Preise sind genau.'],
+  ['Bei der Zählung fuhren 2.416 Fahrräder vorbei.',0,'Hier wurde genau gezählt – das sieht man an den vielen Ziffern ohne Nullen.'],
+  ['Im Kino wurden heute 317 Karten verkauft.',0,'Verkaufte Karten werden genau gezählt.'],
+  ['Eine Woche hat 7 Tage.',0,'Das ist immer genau so.'],
+  ['Ein Meter hat 100 Zentimeter.',0,'Die Zahl sieht rund aus – ist aber <b>genau</b>!'],
+  ['Mini ist beim Weitsprung 1,23 m gesprungen.',0,'Der Sprung wurde genau gemessen.']
+];
+let genauPool=[];
+function genGenau(){
+  if(!genauPool.length)genauPool=shuffle(GENAU);
+  const [s,g,why]=genauPool.pop();
+  return {type:'Gerundet oder genau?',speaker:sp(),bubble:'Gerundet oder genau?',
+    q:`„${s}“<br>Ist die Zahl <b>gerundet</b> oder <b>genau</b>?`,
+    kind:'choice',options:['≈ gerundet','= genau'],optCls:['up','down'],answer:g?0:1,
+    explain:`<b>${g?'Gerundet':'Genau'}.</b> ${why}<br><small>Tipp: Wörter wie <i>etwa, rund, ungefähr, fast, knapp, über</i> zeigen gerundete Zahlen.</small>`};
+}
+
+const MODES=[
+  {id:'learn',ico:'🧭',t:'Erklären',d:'Schritt für Schritt verstehen, wie Runden geht.',cls:'learn'},
+  {id:'mark',ico:'🖍️',t:'Markieren & runden',d:'Erst die Ziffer rechts daneben markieren, dann runden.',gen:genMark},
+  {id:'updown',ico:'⬆️⬇️',t:'Auf oder ab?',d:'Hüpft Mini hoch oder buddelt Max runter?',gen:genUpDown},
+  {id:'round',ico:'✏️',t:'Runde!',d:'Zahlen und Sachaufgaben runden.',gen:genRound},
+  {id:'table',ico:'📋',t:'Rundungstabelle',d:'Eine Zahl auf HT, ZT, T und H runden.',gen:genTable},
+  {id:'line',ico:'📏',t:'Nachbarn am Rechenstrich',d:'Zu welchem Nachbarn wird gerundet?',gen:genLine},
+  {id:'strich',ico:'📰',t:'Rechenstrich & Zeitung',d:'Zahlen finden, Bereiche bestimmen, „fast 38.000“ …',gen:genStrich},
+  {id:'genau',ico:'≈',t:'Gerundet oder genau?',d:'Erkenne, ob eine Zahl gerundet ist.',gen:genGenau},
+  {id:'who',ico:'🤔',t:'Wer hat recht?',d:'Mini und Max streiten – finde den Fehler.',gen:genWho},
+  {id:'knobel',ico:'🧩',t:'Denkaufgaben',d:'Geheimzahlen, Lücken, Ziffernkarten und Tricks.',cls:'knobel',gen:p=>pick(KNOBEL)(p)},
+  {id:'mix',ico:'🎲',t:'Gemischte Runde',d:'Von allem etwas – die Profi-Runde!',gen:p=>pick([genMark,genUpDown,genRound,genTable,genLine,genStrich,genStrich,genGenau,genWho,...KNOBEL])(p)}
+];
+
+/* ---------- Zustand & Oberfläche ---------- */
+const S={p:100,mode:null,tasks:[],i:0,res:[],tries:0,locked:false,input:'',sel:new Set(),learn:null};
+const curP=()=>S.p==='mix'?pick(POS):S.p;
+const pLabel=()=>S.p==='mix'?'alle Stellen':NAME[S.p];
+let app;
+/* Alles passt immer auf den Bildschirm: Größe automatisch anpassen */
+function fit(){
+  if(!app)return;const de=document.documentElement;
+  const ok=z=>{de.style.setProperty('--z',z);return de.scrollHeight<=window.innerHeight+1&&de.scrollWidth<=window.innerWidth+1;};
+  let lo=.45,hi=1.7;
+  if(ok(hi))return;
+  for(let k=0;k<10;k++){const m=(lo+hi)/2;if(ok(m))lo=m;else hi=m;}
+  ok(lo);
+}
+let fitT;window.addEventListener('resize',()=>{clearTimeout(fitT);fitT=setTimeout(fit,80);});
+const TOOLS=`<div class="tools"><button class="tool" data-t="fs" aria-label="Vollbild">⛶ Vollbild</button></div>`;
+function bindTools(){
+  setTimeout(fit,0);
+  app.querySelectorAll('.tool').forEach(b=>b.onclick=()=>{
+    {try{const d=document,el=d.documentElement;
+      if(d.fullscreenElement||d.webkitFullscreenElement){(d.exitFullscreen||d.webkitExitFullscreen).call(d);}
+      else{const r=(el.requestFullscreen||el.webkitRequestFullscreen);if(r){const p=r.call(el);if(p&&p.catch)p.catch(()=>{});}}
+    }catch(e){}}
+  });
+}
+
+function renderMenu(){
+  S.mode=null;
+  app.innerHTML=`
+  <div class="top" style="justify-content:flex-end">${TOOLS}</div>
+  <header class="hero">${MINI_SVG}<div class="bubble">Beim Spiel waren genau <b>43.817</b> Zuschauer!</div>
+    <div><h1>Runden mit Mini und Max</h1><p>Mini hüpft hoch – aufrunden. Max buddelt runter – abrunden.</p></div>
+    <div class="bubble">Also fast <b>44.000</b>. Super!</div>${MAX_SVG}</header>
+  <section class="card"><h2>1. Auf welche Stelle rundest du?</h2><div class="chips">
+    ${POS.map(p=>`<button class="chip ${S.p===p?'on':''}" data-p="${p}">${NAME[p]}<small>auf ${fmt(p)}er</small></button>`).join('')}
+    <button class="chip ${S.p==='mix'?'on':''}" data-p="mix">🎲 Alle<small>gemischt</small></button></div></section>
+  <section class="card"><h2>2. Was möchtest du machen?</h2><div class="modes">
+    ${MODES.map(m=>`<button class="mode ${m.cls||''}" data-m="${m.id}"><span class="ico">${m.ico}</span><b>${m.t}</b><small>${m.d}</small></button>`).join('')}</div></section>
+  <section class="card merk">
+    <div class="rule down">${charSvg('max','sm')}<div><b>0, 1, 2, 3, 4</b><br>Max buddelt runter – <b>abrunden</b>!</div></div>
+    <div class="rule up">${charSvg('mini','sm')}<div><b>5, 6, 7, 8, 9</b><br>Mini hüpft hoch – <b>aufrunden</b>!</div></div>
+    <div class="rule about"><b style="font-size:40px">≈</b><div>bedeutet <b>„ungefähr“</b><br>43.817 ≈ 44.000</div></div>
+  </section>`;
+  bindTools();
+  app.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{S.p=b.dataset.p==='mix'?'mix':+b.dataset.p;renderMenu();});
+  app.querySelectorAll('.mode').forEach(b=>b.onclick=()=>{const m=b.dataset.m;if(m==='learn')startLearn();else startPlay(m);});
+  window.scrollTo(0,0);
+}
+
+/* ----- Lernmodus ----- */
+function startLearn(){S.mode='learn';const p=curP();S.learn={p,n:makeNumber(p),step:1};renderLearn();}
+function renderLearn(){
+  const {p,n,step}=S.learn,d=digitAt(n,p/10),up=d>=5,r=roundTo(n,p);
+  const steps=[
+    `Suche die <b>Rundungsstelle</b>: den <span class="hr">${NAME[p]}</span>.`,
+    `Schau <b>nur</b> auf die Ziffer rechts daneben: Die ${dz(p)} ist <span class="hd">${d}</span>. Alle Ziffern weiter rechts sind egal!`,
+    up?`${d} ist 5 oder mehr → Mini hüpft hoch: <b>aufrunden</b> ⬆<br>Die ${NAME[p]}ziffer wird um 1 größer.`:`${d} ist kleiner als 5 → Max buddelt runter: <b>abrunden</b> ⬇<br>Die ${NAME[p]}ziffer bleibt gleich.`,
+    `Alle Ziffern rechts von der Rundungsstelle werden zu <b>0</b>.<br><b>${fmt(n)} ≈ ${fmt(r)}</b>`
+  ];
+  const who=step>=3?(up?'mini':'max'):'mini';
+  app.innerHTML=`
+  <div class="top"><button class="back" id="back">← Menü</button><div class="title">🧭 Erklären: Runden auf ${NAME[p]}</div>${TOOLS}</div>
+  <div class="chips" style="margin-bottom:12px">${POS.map(q=>`<button class="chip ${q===p?'on':''}" data-p="${q}">${NAME[q]}</button>`).join('')}</div>
+  <div class="learngrid">
+  <section class="card">
+    <div class="speaker">${charSvg(who,step>=3?'bounce':'')}<div class="bubble">${step<3?'Komm, wir runden zusammen!':up?'Ich hüpfe hoch! Aufrunden!':'Ich buddle runter! Abrunden!'}</div></div>
+    <div class="big">${fmtHi(n,p,{r:step>=1,d:step>=2})}${step>=4?` ≈ ${fmt(r)}`:''}</div>
+    ${tafel(n,p,{r:step>=1,d:step>=2})}
+    ${step>=4?numberLine(n,p):''}
+  </section>
+  <section class="card">
+    <ol class="steps">${steps.slice(0,step).map((s,i)=>`<li class="${i===2?(up?'up':'down'):''}">${s}</li>`).join('')}</ol>
+    ${step>=4&&up&&digitAt(n,p)===9?`<div class="note">Achtung Übertrag! Die 9 beim ${NAME[p]} wird zur 10 – deshalb wird auch die Stelle links daneben um 1 größer.</div>`:''}
+    <div class="learnbar">
+      ${step<4?`<button class="btn primary" id="nextStep">Nächster Schritt ▶</button><button class="btn" id="allSteps">Alles zeigen</button>`:''}
+      <button class="btn" id="newN">🎲 Neue Zahl</button>
+      <button class="btn" id="five">5er-Beispiel</button>
+      <button class="btn" id="carry">Übertrag-Beispiel</button>
+    </div>
+    <div class="learnbar"><input id="own" inputmode="numeric" placeholder="eigene Zahl" aria-label="Eigene Zahl eingeben"><button class="btn" id="ownGo">Zeigen</button><span id="ownMsg" style="color:var(--bad)"></span></div>
+  </section></div>
+  <section class="card merk" style="margin-top:16px">
+    <div class="rule down">${charSvg('max','sm')}<div><b>0, 1, 2, 3, 4</b><br>abrunden</div></div>
+    <div class="rule up">${charSvg('mini','sm')}<div><b>5, 6, 7, 8, 9</b><br>aufrunden</div></div>
+  </section>`;
+  const L=S.learn;
+  app.querySelector('#back').onclick=renderMenu;bindTools();
+  app.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{L.p=+b.dataset.p;L.n=makeNumber(L.p);L.step=1;renderLearn();});
+  const ns=app.querySelector('#nextStep');if(ns)ns.onclick=()=>{L.step++;renderLearn();};
+  const as=app.querySelector('#allSteps');if(as)as.onclick=()=>{L.step=4;renderLearn();};
+  app.querySelector('#newN').onclick=()=>{L.n=makeNumber(L.p);L.step=1;renderLearn();};
+  app.querySelector('#five').onclick=()=>{let n;do{n=setDigit(makeNumber(L.p,false),L.p/10,5);}while(n%L.p===0||digitAt(n,L.p)===9);L.n=n;L.step=1;renderLearn();};
+  app.querySelector('#carry').onclick=()=>{let n;do{n=setDigit(setDigit(makeNumber(L.p,false),L.p,9),L.p/10,rnd(5,9));}while(n>=1000000);L.n=n;L.step=1;renderLearn();};
+  const go=()=>{const v=parseInt(app.querySelector('#own').value.replace(/\D/g,''),10);
+    if(!v||v<L.p||v>999999){app.querySelector('#ownMsg').textContent=`Bitte eine Zahl von ${fmt(L.p)} bis 999.999 eingeben.`;return;}
+    L.n=v;L.step=1;renderLearn();};
+  app.querySelector('#ownGo').onclick=go;
+  app.querySelector('#own').onkeydown=e=>{if(e.key==='Enter')go();};
+}
+
+/* ----- Übungsmodus ----- */
+function startPlay(m){
+  const mode=MODES.find(x=>x.id===m);S.mode=mode;S.tasks=[];S.res=[];S.i=0;
+  for(let k=0;k<10;k++)S.tasks.push(mode.gen(curP()));
+  startTask();
+}
+function startTask(){const t=S.tasks[S.i];S.tries=0;S.locked=false;S.input='';S.sel=new Set();S.phase=0;S.markErr=false;
+  S.vals=t.cells?t.cells.map(()=>''):[];S.cellState=[];S.active=0;renderTask();}
+function renderTask(){
+  const t=S.tasks[S.i];
+  app.innerHTML=`
+  <div class="top"><button class="back" id="back">← Menü</button><div class="title">${S.mode.ico} ${S.mode.t} · ${pLabel()}</div>
+  <div class="dots">${S.tasks.map((_,k)=>`<span class="dot ${S.res[k]||(k===S.i?'cur':'')}"></span>`).join('')}</div>${TOOLS}</div>
+  <div class="playgrid">
+  <section class="card qcard">
+    <div class="speaker"><div id="who">${charSvg(t.speaker)}</div><div class="bubble" id="bub">${t.bubble}</div></div>
+    <div style="color:var(--soft);font-size:16px;margin-bottom:4px">Aufgabe ${S.i+1} von ${S.tasks.length} · ${t.type}</div>
+    <div class="q">${t.q}</div>
+    <div id="vis">${t.visual||''}</div>
+    ${t.help?`<button class="helpbtn" id="helpBtn">💡 Stellenwerttafel zeigen</button><div id="helpBox" hidden>${t.help}</div>`:''}
+  </section>
+  <section class="card acard" id="acard">
+    <div class="answer" id="ans" style="margin-top:0"></div>
+    <div id="fb"></div>
+  </section></div>`;
+  app.querySelector('#back').onclick=renderMenu;bindTools();
+  const hb=app.querySelector('#helpBtn');if(hb)hb.onclick=()=>{app.querySelector('#helpBox').hidden=false;hb.remove();};
+  renderAnswer();
+  window.scrollTo(0,0);
+}
+function renderAnswer(){
+  const t=S.tasks[S.i],a=app.querySelector('#ans');
+  const PAD=`<div class="pad">${[1,2,3,4,5,6,7,8,9].map(d=>`<button data-d="${d}">${d}</button>`).join('')}<button class="del" data-d="del" aria-label="Löschen">⌫</button><button data-d="0">0</button><button class="ok" data-d="ok" aria-label="Prüfen">✓</button></div>`;
+  if(t.kind==='mark'&&S.phase===0){
+    const s=String(t.n),L=s.length;let h='<div class="digits">';
+    for(let i=0;i<L;i++){if(i>0&&(L-i)%3===0)h+='<span class="sep">.</span>';h+=`<button data-pos="${10**(L-1-i)}">${s[i]}</button>`;}
+    a.innerHTML=h+'</div>';
+    a.querySelectorAll('.digits button').forEach(b=>b.onclick=()=>{
+      if(S.locked)return;const pos=+b.dataset.pos;
+      if(pos===t.p/10){S.phase=1;renderAnswer();return;}
+      S.markErr=true;b.classList.add('wrong');react(false);
+      app.querySelector('#fb').innerHTML=`<div class="fb hint"><div class="head">Das ist die ${NAME[pos]}ziffer.</div>Du rundest auf <b>${NAME[t.p]}</b>. Schau auf die Ziffer <b>rechts neben</b> dem ${NAME[t.p]}.</div>`;
+    });
+    return;
+  }
+  if(t.kind==='mark'){
+    app.querySelector('#fb').innerHTML='';
+    a.innerHTML=`<div class="big">${fmtHi(t.n,t.p)}</div><div class="step2">Richtig markiert! <b>2.</b> Jetzt runde auf ${NAME[t.p]}:</div>
+    <div class="display ${S.input?'':'empty'}" id="disp">${S.input?fmt(+S.input):'Tippe deine Antwort'}</div>${PAD}`;
+    a.querySelectorAll('.pad button').forEach(b=>b.onclick=()=>padKey(b.dataset.d));
+    return;
+  }
+  if(t.kind==='cells'){
+    a.innerHTML=`<div class="cells" id="cells"></div>${PAD}`;
+    updateCells();
+    a.querySelectorAll('.pad button').forEach(b=>b.onclick=()=>padKey(b.dataset.d));
+    return;
+  }
+  if(t.kind==='input'){
+    a.innerHTML=`<div class="display ${S.input?'':'empty'}" id="disp">${S.input?fmt(+S.input):'Tippe deine Antwort'}</div>
+    <div class="pad">${[1,2,3,4,5,6,7,8,9].map(d=>`<button data-d="${d}">${d}</button>`).join('')}<button class="del" data-d="del" aria-label="Löschen">⌫</button><button data-d="0">0</button><button class="ok" data-d="ok" aria-label="Prüfen">✓</button></div>`;
+    a.querySelectorAll('.pad button').forEach(b=>b.onclick=()=>padKey(b.dataset.d));
+  }else if(t.kind==='choice'){
+    a.innerHTML=`<div class="choices">${t.options.map((o,k)=>`<button class="choice ${(t.optCls||[])[k]||''}" data-k="${k}">${o}</button>`).join('')}</div>`;
+    a.querySelectorAll('.choice').forEach(b=>b.onclick=()=>{if(!S.locked)checkChoice(+b.dataset.k);});
+  }else{
+    a.innerHTML=`<div class="choices">${t.options.map((o,k)=>`<button class="choice" data-k="${k}">${o.label}</button>`).join('')}</div><button class="check" id="chk">Prüfen ✓</button>`;
+    a.querySelectorAll('.choice').forEach(b=>b.onclick=()=>{if(S.locked)return;const v=t.options[+b.dataset.k].value;
+      if(S.sel.has(v))S.sel.delete(v);else S.sel.add(v);b.classList.toggle('sel');});
+    a.querySelector('#chk').onclick=()=>{if(!S.locked)checkMulti();};
+  }
+}
+function updateCells(){
+  const t=S.tasks[S.i],box=app.querySelector('#cells');if(!box)return;
+  box.innerHTML=t.cells.map((c,k)=>`<button class="cell ${S.cellState[k]||''} ${k===S.active&&!S.locked?'act':''}" data-k="${k}"><small>${c.label}</small><span>${S.vals[k]?fmt(+S.vals[k]):''}</span></button>`).join('');
+  box.querySelectorAll('.cell').forEach(b=>b.onclick=()=>{const k=+b.dataset.k;if(S.locked||S.cellState[k]==='ok')return;S.active=k;updateCells();});
+}
+function cellKey(d){
+  const k=S.active;
+  if(d==='ok'){const e=S.vals.findIndex(v=>!v);if(e>=0){S.active=e;updateCells();return;}checkCells();return;}
+  if(S.cellState[k]==='ok')return;
+  if(S.cellState[k]==='bad')S.cellState[k]='';
+  if(d==='del')S.vals[k]=S.vals[k].slice(0,-1);
+  else if(d!==''&&S.vals[k].length<7)S.vals[k]=(S.vals[k]+d).replace(/^0+(?=\d)/,'');
+  updateCells();
+}
+function checkCells(){
+  const t=S.tasks[S.i],vals=S.vals.map(Number),seen=new Set();
+  const st=t.cells.map((c,k)=>{let ok=c.check(vals[k]);if(t.distinct){if(seen.has(vals[k]))ok=false;seen.add(vals[k]);}return ok;});
+  if(st.every(x=>x)){S.cellState=st.map(()=>'ok');updateCells();return finish(true);}
+  S.tries++;S.cellState=st.map(x=>x?'ok':'bad');
+  if(S.tries===1){
+    react(false);S.vals=S.vals.map((v,k)=>st[k]?v:'');S.active=st.findIndex(x=>!x);updateCells();
+    const dup=t.distinct&&new Set(vals).size<vals.length;
+    app.querySelector('#fb').innerHTML=`<div class="fb hint"><div class="head">Fast! Die roten Felder stimmen noch nicht.</div>${dup?'Achtung: Die Zahlen müssen verschieden sein!<br>':''}${t.hint||''}</div>`;
+    return;
+  }
+  updateCells();finish(false);
+}
+function padKey(d){
+  if(S.locked)return;
+  if(S.tasks[S.i].kind==='cells'){cellKey(d);return;}
+  if(d==='del')S.input=S.input.slice(0,-1);
+  else if(d==='ok'){if(S.input)checkInput();return;}
+  else if(S.input.length<7)S.input=(S.input+d).replace(/^0+(?=\d)/,'');
+  const disp=app.querySelector('#disp');if(!disp)return;
+  disp.className='display '+(S.input?'':'empty');
+  disp.textContent=S.input?fmt(+S.input):'Tippe deine Antwort';
+}
+document.addEventListener('keydown',e=>{
+  if(!S.mode||S.mode==='learn'||!S.tasks[S.i])return;
+  const t=S.tasks[S.i];
+  if(S.locked&&e.key==='Enter'){const n=app.querySelector('#next');if(n)n.click();return;}
+  const typing=t.kind==='input'||t.kind==='cells'||(t.kind==='mark'&&S.phase===1);
+  if(!typing||e.target.tagName==='INPUT')return;
+  if(/^\d$/.test(e.key))padKey(e.key);else if(e.key==='Backspace')padKey('del');else if(e.key==='Enter')padKey('ok');
+});
+
+const PRAISE={mini:['Quak-tastisch! 🐸','Super gehüpft!','Froschstark!','Genau richtig!'],max:['Wuff! Klasse! 🐶','Pfotenstark!','Spitze gebuddelt!','Volltreffer!']};
+function react(ok){
+  const t=S.tasks[S.i],w=app.querySelector('#who svg'),b=app.querySelector('#bub');
+  if(w){w.classList.remove('bounce','shake');void w.getBoundingClientRect();w.classList.add(ok?'bounce':'shake');}
+  if(b)b.textContent=ok?pick(PRAISE[t.speaker]):'Hmm … schau mal genau!';
+}
+function checkInput(){
+  const t=S.tasks[S.i],v=+S.input;
+  if(v===t.answer)return finish(true);
+  S.tries++;
+  if(S.tries===1){react(false);
+    app.querySelector('#fb').innerHTML=`<div class="fb hint"><div class="head">Fast! Probier es nochmal.</div>${t.hint||''}</div>`;
+    S.input='';padKey('');return;}
+  finish(false);
+}
+function checkChoice(k){
+  const t=S.tasks[S.i],btns=app.querySelectorAll('.choice');
+  btns.forEach((b,i)=>{b.disabled=true;if(i===t.answer)b.classList.add('right');else if(i===k)b.classList.add('wrong');});
+  finish(k===t.answer);
+}
+function checkMulti(){
+  const t=S.tasks[S.i],want=new Set(t.answer);
+  const ok=S.sel.size===want.size&&[...S.sel].every(v=>want.has(v));
+  if(ok){markMulti();return finish(true);}
+  S.tries++;
+  if(S.tries===1){react(false);
+    app.querySelector('#fb').innerHTML=`<div class="fb hint"><div class="head">Noch nicht ganz! ${S.sel.size<want.size?'Es fehlen noch welche.':'Prüfe deine Auswahl nochmal.'}</div>${t.hint||''}</div>`;return;}
+  markMulti();finish(false);
+}
+function markMulti(){
+  const t=S.tasks[S.i],want=new Set(t.answer);
+  app.querySelectorAll('.choice').forEach((b,k)=>{const v=t.options[k].value;b.disabled=true;b.classList.remove('sel');
+    if(want.has(v))b.classList.add('right');else if(S.sel.has(v))b.classList.add('wrong');});
+}
+function finish(ok){
+  S.locked=true;const t=S.tasks[S.i];
+  const first=S.tries===0&&!S.markErr;
+  S.res[S.i]=ok?(first?'g':'y'):'r';
+  react(ok);
+  let sol=(t.kind==='input'||t.kind==='mark')?`Die Lösung ist <b>${fmt(t.answer)}</b>.<br>`:'';
+  if(t.kind==='cells'&&t.cells.some(c=>c.sol!=null))sol=`Lösung: ${t.cells.map(c=>`${c.label}: <b>${fmt(c.sol)}</b>`).join(' · ')}<br>`;
+  if(t.plot){const v=app.querySelector('#vis');if(v)v.innerHTML=t.plot(S.vals.filter(Boolean).map(Number));}
+  if(t.kind==='cells')updateCells();
+  app.querySelector('#fb').innerHTML=`<div class="fb ${ok?'ok':'bad'}"><div class="head">${ok?(first?'Richtig! ⭐':'Richtig – im zweiten Versuch! 👍'):'Leider nicht richtig.'}</div>${ok?'':sol}${t.explain}</div>
+  <button class="next" id="next">${S.i<S.tasks.length-1?'Weiter ▶':'Fertig 🏁'}</button>`;
+  const dots=app.querySelectorAll('.dot');if(dots[S.i])dots[S.i].className='dot '+S.res[S.i];
+  app.querySelector('#next').onclick=()=>{S.i++;if(S.i<S.tasks.length)startTask();else renderEnd();};
+  app.querySelector('#acard').classList.add('done');
+  fit();
+}
+function renderEnd(){
+  const g=S.res.filter(x=>x==='g').length,y=S.res.filter(x=>x==='y').length,n=S.tasks.length;
+  const pts=(2*g+y)/(2*n),st=pts>=.85?3:pts>=.6?2:1;
+  const msg=st===3?'Wow! Ihr seid echte Rundungs-Profis!':st===2?'Gut gemacht! Noch ein bisschen üben, dann klappt alles.':'Guter Anfang! Schau dir den Erklärmodus nochmal an.';
+  app.innerHTML=`<section class="card endbox">
+    <div class="hero">${charSvg('mini','bounce')}${charSvg('max','bounce')}</div>
+    <h1>Geschafft!</h1>
+    <div class="stars">${'⭐'.repeat(st)}${'☆'.repeat(3-st)}</div>
+    <p style="font-size:22px"><b>${g+y} von ${n}</b> Aufgaben richtig${y?` (davon ${y} im zweiten Versuch)`:''}.</p>
+    <p style="font-size:20px;color:var(--soft)">${msg}</p>
+    <div class="endbtns"><button class="btn primary" id="again">🔁 Nochmal</button><button class="btn" id="menu">🏠 Menü</button>${st<3?'<button class="btn" id="learn">🧭 Erklären</button>':''}</div>
+  </section>`;
+  app.querySelector('#again').onclick=()=>startPlay(S.mode.id);
+  app.querySelector('#menu').onclick=renderMenu;
+  const l=app.querySelector('#learn');if(l)l.onclick=startLearn;
+}
+
+if(typeof document!=='undefined'&&document.getElementById('app')){app=document.getElementById('app');
+  let raf=0;new MutationObserver(()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(fit);}).observe(app,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','class']});
+  renderMenu();
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(fit);}
+</script>
+</body>
+</html>

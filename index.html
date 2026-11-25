@@ -14,6 +14,7 @@
 }
 *{box-sizing:border-box}
 html,body{margin:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 body{font-family:'Fredoka','Nunito','Avenir Next',system-ui,sans-serif;color:var(--ink);
   background:linear-gradient(160deg,#e7f5ff 0%,#f4fce3 55%,#fff4e6 100%);min-height:100vh;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent}
@@ -34,7 +35,8 @@ input{-webkit-user-select:text;user-select:text}
 .heroimg img{max-width:100%;max-height:240px;border-radius:20px;box-shadow:0 6px 20px rgba(36,50,74,.15);display:block}
 .acard.done .pad{display:none}
 .acard.done .check{display:none}
-button{font-family:inherit;color:inherit;cursor:pointer;border:none;-webkit-user-select:none;user-select:none}
+button{font-family:inherit;color:inherit;cursor:pointer;border:none;-webkit-user-select:none;user-select:none;-webkit-appearance:none;appearance:none;white-space:normal;min-width:0;max-width:100%}
+button,.q,.fb,.bubble{overflow-wrap:break-word;-webkit-hyphens:auto;hyphens:auto}
 h1{font-size:clamp(26px,4.5vw,40px);margin:0 0 4px;line-height:1.1}
 h2{font-size:22px;margin:0 0 12px}
 .card{background:var(--card);border-radius:24px;padding:18px 20px;box-shadow:0 6px 0 rgba(36,50,74,.08),0 10px 30px rgba(36,50,74,.08);margin-bottom:16px}
@@ -48,14 +50,15 @@ h2{font-size:22px;margin:0 0 12px}
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 
 .chips{display:flex;flex-wrap:wrap;gap:10px}
-.chip{background:#f1f3f5;border-radius:16px;padding:10px 16px;font-size:19px;font-weight:600;display:flex;flex-direction:column;align-items:center;min-width:120px;border:3px solid transparent}
+.chip{flex:1 1 auto;line-height:1.2;background:#f1f3f5;border-radius:16px;padding:10px 16px;font-size:19px;font-weight:600;display:flex;flex-direction:column;align-items:center;min-width:120px;border:3px solid transparent}
 .chip small{font-weight:400;color:var(--soft);font-size:15px}
 .chip.on{background:var(--hr);border-color:#f59f00}
-.modes{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
-.mode{background:#f8f9fa;border-radius:20px;padding:16px;text-align:left;display:flex;flex-direction:column;gap:4px;border:3px solid #e9ecef;font-size:19px;transition:transform .1s}
+.modes{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,240px),1fr));gap:12px}
+.mode{width:100%;height:100%;align-items:flex-start;line-height:1.25;background:#f8f9fa;border-radius:20px;padding:16px;text-align:left;display:flex;flex-direction:column;gap:4px;border:3px solid #e9ecef;font-size:19px;transition:transform .1s}
 .mode:active{transform:scale(.97)}
 .mode .ico{font-size:34px}
 .mode small{color:var(--soft);font-size:15px;line-height:1.3}
+.mode b,.mode small{display:block;width:100%}
 .mode.learn{background:var(--mini-l);border-color:#b2f2bb}
 .mode.knobel{background:#f3f0ff;border-color:#d0bfff}
 .merk{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
@@ -173,7 +176,7 @@ h2{font-size:22px;margin:0 0 12px}
   .fb{font-size:21px}
   .tafel{font-size:32px}.tafel th,.tafel td{width:76px;height:60px}
   .steps li{font-size:23px}
-  .modes{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+  .modes{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
 }
 @media (max-width:560px){.char{width:70px;height:70px}.tafel th,.tafel td{width:46px;height:42px;font-size:20px}.pad button{height:56px}}
 </style>
@@ -582,9 +585,9 @@ function renderMenu(){
   S.mode=null;
   app.innerHTML=`
   <div class="top" style="justify-content:flex-end">${TOOLS}</div>
-  <header class="hero">${MINI_SVG}<div class="bubble">Beim Spiel waren genau <b>43.817</b> Zuschauer!</div>
+  <header class="hero">${MINI_SVG}<div class="bubble">Beim Spiel waren genau <b>53.817</b> Zuschauer!</div>
     <div><h1>Runden mit Mini und Max</h1><p>Mini hüpft hoch – aufrunden. Max buddelt runter – abrunden.</p></div>
-    <div class="bubble">Also fast <b>44.000</b>. Super!</div>${MAX_SVG}</header>
+    <div class="bubble">Also fast <b>54.000</b>. Super!</div>${MAX_SVG}</header>
   <section class="card"><h2>1. Auf welche Stelle rundest du?</h2><div class="chips">
     ${POS.map(p=>`<button class="chip ${S.p===p?'on':''}" data-p="${p}">${NAME[p]}<small>auf ${fmt(p)}er</small></button>`).join('')}
     <button class="chip ${S.p==='mix'?'on':''}" data-p="mix">🎲 Alle<small>gemischt</small></button></div></section>
@@ -593,7 +596,7 @@ function renderMenu(){
   <section class="card merk">
     <div class="rule down">${charSvg('max','sm')}<div><b>0, 1, 2, 3, 4</b><br>Max buddelt runter – <b>abrunden</b>!</div></div>
     <div class="rule up">${charSvg('mini','sm')}<div><b>5, 6, 7, 8, 9</b><br>Mini hüpft hoch – <b>aufrunden</b>!</div></div>
-    <div class="rule about"><b style="font-size:40px">≈</b><div>bedeutet <b>„ungefähr“</b><br>43.817 ≈ 44.000</div></div>
+    <div class="rule about"><b style="font-size:40px">≈</b><div>bedeutet <b>„ungefähr“</b><br>53.817 ≈ 54.000</div></div>
   </section>`;
   bindTools();
   app.querySelectorAll('.chip').forEach(b=>b.onclick=()=>{S.p=b.dataset.p==='mix'?'mix':+b.dataset.p;renderMenu();});

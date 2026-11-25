@@ -17,7 +17,8 @@ html,body{margin:0}
 body{font-family:'Fredoka','Nunito','Avenir Next',system-ui,sans-serif;color:var(--ink);
   background:linear-gradient(160deg,#e7f5ff 0%,#f4fce3 55%,#fff4e6 100%);min-height:100vh;
   touch-action:manipulation;-webkit-tap-highlight-color:transparent}
-#app{max-width:1640px;margin:0 auto;padding:14px 18px 30px;zoom:var(--z,1)}
+#app{max-width:1640px;margin:0 auto;padding:14px 18px 30px;transform-origin:0 0}
+html.fitmode,html.fitmode body{overflow:hidden;height:100%;min-height:0;overscroll-behavior:none}
 body{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 input{-webkit-user-select:text;user-select:text}
 .tools{display:flex;gap:8px}
@@ -27,7 +28,6 @@ input{-webkit-user-select:text;user-select:text}
 @media (min-width:1000px) and (orientation:landscape){
   .playgrid{grid-template-columns:minmax(0,1.3fr) minmax(0,1fr)}
   .learngrid{grid-template-columns:minmax(0,1.2fr) minmax(0,1fr)}
-  .acard{position:sticky;top:12px}
 }
 .imgtool{display:inline-flex;align-items:center;cursor:pointer}
 .heroimg{flex-direction:column;gap:8px}
@@ -553,14 +553,20 @@ const pLabel=()=>S.p==='mix'?'alle Stellen':NAME[S.p];
 let app;
 /* Alles passt immer auf den Bildschirm: Größe automatisch anpassen */
 function fit(){
-  if(!app)return;const de=document.documentElement;
-  const ok=z=>{de.style.setProperty('--z',z);return de.scrollHeight<=window.innerHeight+1&&de.scrollWidth<=window.innerWidth+1;};
-  let lo=.45,hi=1.7;
-  if(ok(hi))return;
-  for(let k=0;k<10;k++){const m=(lo+hi)/2;if(ok(m))lo=m;else hi=m;}
-  ok(lo);
+  if(!app)return;const de=document.documentElement,on=S.mode!==null;
+  de.classList.toggle('fitmode',on);
+  if(!on){app.style.transform='';app.style.width='';app.style.maxWidth='';app.style.margin='';return;}
+  /* Übungsseiten: per transform skalieren (zuverlässig auch in Safari/iPad) */
+  const vv=window.visualViewport,W=Math.round(vv?vv.width:window.innerWidth),H=Math.round(vv?vv.height:window.innerHeight);
+  app.style.transform='';app.style.maxWidth='none';app.style.margin='0';
+  const lay=s=>{const w=Math.min(W/s,1640);app.style.width=w+'px';return app.offsetHeight*s<=H;};
+  let lo=.4,hi=1.7,best;
+  if(lay(hi))best=hi;else{for(let k=0;k<12;k++){const m=(lo+hi)/2;if(lay(m))lo=m;else hi=m;}best=lo;}
+  const w=Math.min(W/best,1640);app.style.width=w+'px';
+  app.style.transform=`translateX(${Math.max(0,(W-w*best)/2)}px) scale(${best})`;
+  window.scrollTo(0,0);
 }
-let fitT;window.addEventListener('resize',()=>{clearTimeout(fitT);fitT=setTimeout(fit,80);});
+let fitT;const refit=()=>{clearTimeout(fitT);fitT=setTimeout(fit,80);};window.addEventListener('resize',refit);window.addEventListener('orientationchange',refit);if(window.visualViewport)window.visualViewport.addEventListener('resize',refit);
 const TOOLS=`<div class="tools"><button class="tool" data-t="fs" aria-label="Vollbild">⛶ Vollbild</button></div>`;
 function bindTools(){
   setTimeout(fit,0);
